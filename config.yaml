@@ -1,0 +1,51 @@
+# PrenotaBot Livre - configuracao de exemplo (o painel cria perfis em perfis/)
+# Dica: use o painel (iniciar.bat) - ele edita tudo isto por voce.
+
+# IDs dos servicos (numero no fim de .../Services/Booking/XXXX). Pode ser mais de um.
+# Deixe vazio e use "Listar servicos da minha conta" para descobrir os IDs da sua conta.
+servicos: []
+
+intervalo_min_segundos: 45      # minimo 20
+intervalo_max_segundos: 90
+max_tentativas: 0               # 0 = sem limite
+janela_horario: ""              # ex.: "09:30-12:00" (vazio = o dia todo)
+dias_semana: []                 # 1=seg ... 7=dom (vazio = todos)
+espera_bloqueio_minutos: 10
+
+segundo_plano: true             # Chrome minimizado; aparece sozinho quando precisar de voce
+usar_perfil_persistente: true
+auto_login: true
+
+somente_alertar: false          # true = so avisa, nao preenche nada
+preencher_formulario: true
+enviar_otp_automatico: true
+clicar_avancar: true
+auto_agendar: true              # escolhe data/horario no calendario
+data_minima: ""                 # dd/mm/aaaa
+data_maxima: ""
+meses_a_procurar: 4
+preferencia_periodo: qualquer   # qualquer | manha | tarde
+dias_preferidos: []             # 1=seg ... 7=dom
+salvar_comprovante: true
+alerta_sonoro: true
+
+dados:
+  endereco: ""                  # ex.: "Rua X, 100 - Centro - Rondonopolis/MT - CEP 78700-000"
+  altura_cm: ""
+  estado_civil: ""              # ex.: Solteiro/Solteira, Casado/a
+  cor_olhos: ""
+  filhos_menores: "Nao"
+  quantidade_filhos: "0"
+  passaporte_vencido: "Nao"
+  data_vencimento_passaporte: ""
+  observacoes: ""
+
+acompanhantes: []
+#  - {nome: "Maria", sobrenome: "Silva", nascimento: "10/05/2015", parentesco: "Filho/a"}
+
+# arquivos da pasta files/, na ordem dos anexos do site.
+# Sao Paulo primeiro passaporte (5402): 1 anexo = comprovante de residencia em seu nome.
+documentos: []                  # ex.: [residencia.pdf]
+
+campos_extra: []
+#  - {id: "ddls_4", tipo: select, valor: "Casado/a"}
