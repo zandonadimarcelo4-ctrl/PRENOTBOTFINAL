@@ -432,7 +432,8 @@ export function App() {
     if (!c || !e) return;
     await saveAll(true, c, e);
 
-    const resp = await fetch("/api/bot/start", {
+    const endpoint = discover ? "/api/bot/start" : "/api/automation/start-all";
+    const resp = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -450,6 +451,12 @@ export function App() {
     }
     const data = await resp.json();
     setRunner(data.runner);
+    if (data.chromiumSync?.connected) {
+      setStatusBar(
+        `Monitor, Radar e Chromium sincronizados (${data.chromiumSync.opened?.length ?? 0} aba(s) nova(s)).`
+      );
+      void refreshChromiumStatus(activeProfile);
+    }
     setActiveTab("inicio");
   };
 
@@ -909,22 +916,22 @@ export function App() {
                 <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 flex flex-col justify-between gap-3">
                   <div>
                     <div className="text-[11px] font-bold uppercase tracking-wider text-blue-700">
-                      Passo 3 • Navegador Pronto
+                      Passo 3 • Pacote Pré-Instalado
                     </div>
                     <h3 className="text-sm font-bold text-slate-800 mt-1">
-                      Chromium Edição Prenot@mi
+                      Programa + Chromium Dedicado
                     </h3>
                     <p className="text-slate-600 mt-1 leading-relaxed">
-                      Já abre configurado só para o Prenot@mi com extensão de autofill, Webmail OTP e WhatsApp Radar.
+                      Tudo pré-instalado: basta extrair o ZIP e clicar em <strong>INICIAR-AQUI.bat</strong> (ou <code>./iniciar-aqui.sh</code>).
                     </p>
                   </div>
                   <div className="flex gap-2">
                     <a
-                      href={`/api/chromium/bundle-zip?profile=${encodeURIComponent(activeProfile)}`}
-                      download="chromium-dedicado-prenotami.zip"
+                      href={`/api/release/portable-zip?profile=${encodeURIComponent(activeProfile)}`}
+                      download="PrenotaBot-Livre-Portatil.zip"
                       className="flex-1 rounded-md bg-blue-600 py-2 text-center font-semibold text-white hover:bg-blue-700"
                     >
-                      Baixar Pacote (.zip)
+                      Baixar Completo (.zip)
                     </a>
                     <button
                       type="button"
@@ -1869,22 +1876,31 @@ export function App() {
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div className="space-y-1 max-w-xl">
                     <h2 className="text-base font-bold text-emerald-950">
-                      Chromium Edição Dedicada Prenot@mi
+                      Pacote Pré-Instalado + Chromium Edição Dedicada Prenot@mi
                     </h2>
                     <p className="text-emerald-900 leading-relaxed">
-                      Baixe o pacote pronto para o seu computador. Ele configura o Chromium para abrir <strong>exclusivamente focado no Prenot@mi</strong>, já com nova aba personalizada, barra de favoritos, captura automática de OTP (<strong>noreply-prenotami@esteri.it</strong>) e Radar WhatsApp.
+                      Baixe o programa completo já pré-instalado (sem precisar de <code>npm install</code>) ou apenas o pacote do Chromium. Abre tudo integrado: painel web, Prenot@mi com autofill, captura automática de OTP (<strong>noreply-prenotami@esteri.it</strong>) e Radar WhatsApp.
                     </p>
                   </div>
-                  <a
-                    href={`/api/chromium/bundle-zip?profile=${encodeURIComponent(activeProfile)}`}
-                    download="chromium-dedicado-prenotami.zip"
-                    className="rounded-xl bg-[#009246] px-5 py-3 text-sm font-bold text-white shadow hover:bg-[#007a3a] transition"
-                  >
-                    Baixar Pacote Chromium (.zip)
-                  </a>
+                  <div className="flex flex-wrap gap-2">
+                    <a
+                      href={`/api/release/portable-zip?profile=${encodeURIComponent(activeProfile)}`}
+                      download="PrenotaBot-Livre-Portatil.zip"
+                      className="rounded-xl bg-[#009246] px-5 py-3 text-sm font-bold text-white shadow hover:bg-[#007a3a] transition"
+                    >
+                      Baixar Programa Completo (.zip)
+                    </a>
+                    <a
+                      href={`/api/chromium/bundle-zip?profile=${encodeURIComponent(activeProfile)}`}
+                      download="chromium-dedicado-prenotami.zip"
+                      className="rounded-xl border border-emerald-700 bg-white px-4 py-3 text-sm font-bold text-emerald-900 hover:bg-emerald-50 transition"
+                    >
+                      Só Chromium (.zip)
+                    </a>
+                  </div>
                 </div>
                 <div className="text-[11px] text-emerald-900 border-t border-emerald-200/70 pt-2">
-                  <strong>Como usar em 2 passos:</strong> 1) Extraia o arquivo ZIP em uma pasta no PC • 2) Clique duas vezes em <code>iniciar-prenotabot-chromium.bat</code> (Windows) ou execute <code>./iniciar-prenotabot-chromium.sh</code> (Linux).
+                  <strong>Como usar em 2 passos:</strong> 1) Extraia o arquivo ZIP em uma pasta no PC • 2) Clique duas vezes em <code>INICIAR-AQUI.bat</code> (Windows) ou execute <code>./iniciar-aqui.sh</code> (Linux/macOS).
                 </div>
               </section>
 

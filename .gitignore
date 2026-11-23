@@ -1,5 +1,8 @@
 node_modules/
 dist/
+dist-server/
+release/
+chromium_perfil/
 .env
 files/
 logs/

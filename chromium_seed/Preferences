@@ -1,0 +1,27 @@
+{
+  "homepage": "https://prenotami.esteri.it/",
+  "homepage_is_newtabpage": false,
+  "browser": {
+    "show_home_button": true,
+    "check_default_browser": false
+  },
+  "bookmark_bar": {
+    "show_on_all_tabs": true
+  },
+  "session": {
+    "restore_on_startup": 4,
+    "startup_urls": [
+      "https://prenotami.esteri.it/",
+      "https://prenotami.esteri.it/Services/Booking/5402",
+      "https://prenotami.esteri.it/Services/Booking/5402",
+      "https://web.whatsapp.com/",
+      "https://mail.google.com/",
+      "http://localhost:3000"
+    ]
+  },
+  "credentials_enable_service": false,
+  "profile": {
+    "name": "Prenot@mi Dedicado",
+    "password_manager_enabled": false
+  }
+}

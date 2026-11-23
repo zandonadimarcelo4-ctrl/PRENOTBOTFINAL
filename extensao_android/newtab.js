@@ -25,6 +25,15 @@ function checkOtp(activeFeedback) {
 checkOtp(false);
 setInterval(() => checkOtp(false), 15000);
 
+document.getElementById('ntStartAll').addEventListener('click', () => {
+  const btn = document.getElementById('ntStartAll');
+  btn.textContent = 'Sincronizando...';
+  chrome.runtime.sendMessage({ type: 'START_ALL_INTEGRATED', forceImmediate: false }, (res) => {
+    btn.textContent = (res && res.ok) ? 'Tudo Integrado e Ativo!' : 'Inicie o Painel Local';
+    setTimeout(() => { btn.textContent = 'Ligar Tudo Automático'; }, 2500);
+  });
+});
+
 document.getElementById('ntFetchOtp').addEventListener('click', () => checkOtp(true));
 document.getElementById('ntCopyOtp').addEventListener('click', async () => {
   if (!currentOtp) return;

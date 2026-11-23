@@ -36,6 +36,14 @@ import {
   inferImapHost,
   reportCapturedOtp,
 } from "./otpReader.ts";
+import {
+  DIST_DIR,
+  DIST_SERVER_FILE,
+  buildEmptyEnvMap,
+  buildPortableStartScripts,
+  buildSanitizedReleaseConfig,
+  createPortableReleaseZip,
+} from "./releaseBuilder.ts";
 
 test("normalize strips accents, trims and collapses spaces", () => {
   assert.equal(normalize("  Endereço   COMPLETO "), "endereco completo");
@@ -296,5 +304,39 @@ test("otpReader extracts OTP from noreply-prenotami@esteri.it and blocks private
   assert.equal(inferImapHost("user@gmail.com", "127.0.0.1"), null);
   assert.equal(inferImapHost("user@gmail.com", "169.254.169.254"), null);
 });
+
+test("releaseBuilder generates 1-click launchers and strips secrets from release configs", () => {
+  const scripts = buildPortableStartScripts(5402, DEFAULT_CONFIG.chromium);
+  assert.match(scripts.bat, /dist-server\\server\.mjs/);
+  assert.match(scripts.bat, /iniciar-prenotabot-chromium\.bat/);
+  assert.match(scripts.sh, /dist-server\/server\.mjs/);
+  assert.match(scripts.sh, /iniciar-prenotabot-chromium\.sh/);
+
+  const emptyEnv = buildEmptyEnvMap();
+  assert.equal(emptyEnv.PRENOTAMI_SENHA, "");
+  assert.equal(emptyEnv.IMAP_SENHA_APP, "");
+
+  const dirty = structuredClone(DEFAULT_CONFIG);
+  dirty.dados.endereco = "Rua Privada 999";
+  const sanitized = buildSanitizedReleaseConfig(dirty, true);
+  assert.equal(sanitized.dados.endereco, "");
+
+  if (
+    fs.existsSync(path.join(DIST_DIR, "index.html")) &&
+    fs.existsSync(DIST_SERVER_FILE)
+  ) {
+    const zipBuf = createPortableReleaseZip(dirty, {
+      sanitizeForPublicRelease: true,
+    });
+    assert.equal(zipBuf.readUInt32LE(0), 0x04034b50);
+    assert.ok(zipBuf.includes("PrenotaBot-Livre/INICIAR-AQUI.bat"));
+    assert.ok(zipBuf.includes("PrenotaBot-Livre/iniciar-aqui.sh"));
+    assert.ok(zipBuf.includes("PrenotaBot-Livre/dist-server/server.mjs"));
+    assert.ok(zipBuf.includes("PrenotaBot-Livre/dist/index.html"));
+    assert.ok(zipBuf.includes("PrenotaBot-Livre/extensao_android/manifest.json"));
+    assert.ok(!zipBuf.includes("Rua Privada 999"));
+  }
+});
+
 
 

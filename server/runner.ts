@@ -22,6 +22,8 @@ import {
   sanitizePrenotamiBookingUrl,
   secondsUntilScheduledStart,
 } from "./core.ts";
+import { openChromiumBridgeTab } from "./chromiumBridge.ts";
+import { fetchLatestPrenotamiOtpViaImap } from "./otpReader.ts";
 
 export interface LogEntry {
   id: number;
@@ -180,6 +182,22 @@ export class PrenotaBotRunner {
       true
     );
     recordHistory(primarySid, "radar_whatsapp");
+    if (cfg.radar_whatsapp.abrir_automatico !== false) {
+      void openChromiumBridgeTab(
+        `${bookingUrl}#pb_radar=1`,
+        cfg.chromium?.porta_cdp
+      ).then((r) => {
+        if (r.ok) {
+          this.addLog(
+            "OK",
+            `Chromium Dedicado abriu automaticamente ${bookingUrl}`
+          );
+        }
+      });
+    }
+    if (cfg.chromium?.auto_otp_email !== false && (env.IMAP_EMAIL || env.PRENOTAMI_EMAIL) && env.IMAP_SENHA_APP) {
+      void fetchLatestPrenotamiOtpViaImap(env, true);
+    }
     return evt;
   }
 
@@ -462,6 +480,18 @@ export class PrenotaBotRunner {
           this.state.statusLine = `Tentativa ${this.state.attempts} | serviço ${sid}: ${st}`;
 
           if (st === "disponivel" || st === "calendario") {
+            const targetUrl = sanitizePrenotamiBookingUrl(
+              BOOKING_URL.replace("{id}", String(sid)),
+              sid
+            );
+            void openChromiumBridgeTab(targetUrl, cfg.chromium?.porta_cdp);
+            if (
+              cfg.chromium?.auto_otp_email !== false &&
+              (env.IMAP_EMAIL || env.PRENOTAMI_EMAIL) &&
+              env.IMAP_SENHA_APP
+            ) {
+              void fetchLatestPrenotamiOtpViaImap(env, true);
+            }
             this.triggerAlert(
               cfg,
               env,

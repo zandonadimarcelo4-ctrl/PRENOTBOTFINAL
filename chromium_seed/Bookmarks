@@ -1,0 +1,82 @@
+{
+  "checksum": "",
+  "roots": {
+    "bookmark_bar": {
+      "children": [
+        {
+          "date_added": "13350000000000000",
+          "guid": "00000000-0000-4000-8000-000000000001",
+          "id": "1",
+          "name": "1. Portal Prenot@mi (Login)",
+          "type": "url",
+          "url": "https://prenotami.esteri.it/"
+        },
+        {
+          "date_added": "13350000000000000",
+          "guid": "00000000-0000-4000-8000-000000000002",
+          "id": "2",
+          "name": "2. Agendar (5402)",
+          "type": "url",
+          "url": "https://prenotami.esteri.it/Services/Booking/5402"
+        },
+        {
+          "date_added": "13350000000000000",
+          "guid": "00000000-0000-4000-8000-000000000003",
+          "id": "3",
+          "name": "3. Serviços da Conta",
+          "type": "url",
+          "url": "https://prenotami.esteri.it/Services"
+        },
+        {
+          "date_added": "13350000000000000",
+          "guid": "00000000-0000-4000-8000-000000000004",
+          "id": "4",
+          "name": "4. WhatsApp Radar",
+          "type": "url",
+          "url": "https://web.whatsapp.com/"
+        },
+        {
+          "date_added": "13350000000000000",
+          "guid": "00000000-0000-4000-8000-000000000005",
+          "id": "5",
+          "name": "5. Email OTP (noreply-prenotami)",
+          "type": "url",
+          "url": "https://mail.google.com/"
+        },
+        {
+          "date_added": "13350000000000000",
+          "guid": "00000000-0000-4000-8000-000000000006",
+          "id": "6",
+          "name": "6. Painel PrenotaBot",
+          "type": "url",
+          "url": "http://localhost:3000"
+        }
+      ],
+      "date_added": "13350000000000000",
+      "date_modified": "13350000000000000",
+      "guid": "00000000-0000-4000-8000-000000000100",
+      "id": "100",
+      "name": "Barra de favoritos",
+      "type": "folder"
+    },
+    "other": {
+      "children": [],
+      "date_added": "13350000000000000",
+      "date_modified": "13350000000000000",
+      "guid": "00000000-0000-4000-8000-000000000101",
+      "id": "101",
+      "name": "Outros favoritos",
+      "type": "folder"
+    },
+    "synced": {
+      "children": [],
+      "date_added": "13350000000000000",
+      "date_modified": "13350000000000000",
+      "guid": "00000000-0000-4000-8000-000000000102",
+      "id": "102",
+      "name": "Favoritos em dispositivos moveis",
+      "type": "folder"
+    }
+  },
+  "version": 1
+}

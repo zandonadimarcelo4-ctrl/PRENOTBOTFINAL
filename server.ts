@@ -37,6 +37,7 @@ import {
   buildChromiumInitialPreferences,
   buildChromiumLauncherScript,
   buildChromiumPolicyJson,
+  ensureChromiumDedicatedTabs,
   getChromiumBridgeStatus,
   openChromiumBridgeTab,
 } from "./server/chromiumBridge.ts";
@@ -47,6 +48,7 @@ import {
   reportCapturedOtp,
 } from "./server/otpReader.ts";
 import { runConsularAgent } from "./server/aiAgent.ts";
+import { createPortableReleaseZip } from "./server/releaseBuilder.ts";
 
 ensureDirs();
 
@@ -292,7 +294,7 @@ app.post("/api/test-notifications", async (req, res) => {
   res.json({ results });
 });
 
-app.post("/api/bot/start", (req, res) => {
+app.post("/api/bot/start", async (req, res) => {
   const profile = String(req.body?.profile ?? getLastProfile()).trim();
   const discover = Boolean(req.body?.discover);
   const forceImmediate = Boolean(req.body?.forceImmediate);
@@ -302,11 +304,64 @@ app.post("/api/bot/start", (req, res) => {
   if (req.body?.env) {
     saveEnv(req.body.env as Partial<EnvMap>);
   }
+  const savedCfg = loadConfig(profilePath(profile));
   const started = runner.start(profile, discover, forceImmediate);
   if (!started) {
     return res.status(409).json({ error: "O monitor já está em execução." });
   }
-  res.json({ ok: true, runner: runner.getState() });
+  const chromiumSync = await ensureChromiumDedicatedTabs(
+    savedCfg.servicos[0] ?? 5402,
+    savedCfg.chromium
+  );
+  if (chromiumSync.connected && chromiumSync.opened.length > 0) {
+    runner.addLog(
+      "OK",
+      `Chromium Dedicado sincronizado: ${chromiumSync.opened.length} aba(s) aberta(s) automaticamente.`
+    );
+  }
+  res.json({ ok: true, runner: runner.getState(), chromiumSync });
+});
+
+app.post("/api/automation/start-all", async (req, res) => {
+  const profile = String(req.body?.profile ?? getLastProfile()).trim();
+  const forceImmediate = Boolean(req.body?.forceImmediate);
+  if (req.body?.cfg) {
+    saveConfig(req.body.cfg as BotConfig, profilePath(profile));
+  }
+  if (req.body?.env) {
+    saveEnv(req.body.env as Partial<EnvMap>);
+  }
+
+  const cfg = loadConfig(profilePath(profile));
+  const env = loadEnv();
+  ensureAndroidExtensionFiles(cfg, env);
+
+  const chromiumSync = await ensureChromiumDedicatedTabs(
+    cfg.servicos[0] ?? 5402,
+    cfg.chromium
+  );
+
+  let startedNow = false;
+  if (!runner.getState().running) {
+    startedNow = runner.start(profile, false, forceImmediate);
+  }
+
+  const imapConfigured = Boolean(
+    (env.IMAP_EMAIL || env.PRENOTAMI_EMAIL) && env.IMAP_SENHA_APP
+  );
+  if (cfg.chromium?.auto_otp_email !== false && imapConfigured) {
+    void fetchLatestPrenotamiOtpViaImap(env, false);
+  }
+
+  res.json({
+    ok: true,
+    startedNow,
+    chromiumSync,
+    imapConfigured,
+    runner: runner.getState(),
+    readiness: buildReadinessReport(cfg, env),
+    otp: getCachedOtp(),
+  });
 });
 
 app.post("/api/bot/stop", (_req, res) => {
@@ -314,12 +369,28 @@ app.post("/api/bot/stop", (_req, res) => {
   res.json({ ok: true, runner: runner.getState() });
 });
 
+let lastBackgroundImapAt = 0;
+
 app.get("/api/bot/status", (_req, res) => {
   const activeProfile = getLastProfile();
   const cfg = loadConfig(profilePath(activeProfile));
   const env = loadEnv();
+  const state = runner.getState();
+
+  const now = Date.now();
+  if (
+    state.running &&
+    cfg.chromium?.auto_otp_email !== false &&
+    (env.IMAP_EMAIL || env.PRENOTAMI_EMAIL) &&
+    env.IMAP_SENHA_APP &&
+    now - lastBackgroundImapAt >= 25_000
+  ) {
+    lastBackgroundImapAt = now;
+    void fetchLatestPrenotamiOtpViaImap(env, false);
+  }
+
   res.json({
-    runner: runner.getState(),
+    runner: state,
     catalog: loadCatalog(),
     history: historySummary(),
     readiness: buildReadinessReport(cfg, env),
@@ -502,6 +573,28 @@ app.get("/api/chromium/bundle-zip", (req, res) => {
   res.send(zipBuf);
 });
 
+app.get("/api/release/portable-zip", (req, res) => {
+  const profile = String(req.query.profile ?? getLastProfile());
+  const cfg = loadConfig(profilePath(profile));
+  const origin = safePanelOrigin(req);
+  try {
+    const zipBuf = createPortableReleaseZip(cfg, {
+      sanitizeForPublicRelease: false,
+      panelOrigin: origin,
+    });
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="PrenotaBot-Livre-Portatil.zip"'
+    );
+    res.send(zipBuf);
+  } catch (e) {
+    res.status(503).json({
+      error: e instanceof Error ? e.message : String(e),
+    });
+  }
+});
+
 app.get("/api/chromium/launcher", (req, res) => {
   const osKind = req.query.os === "linux" ? "linux" : "win";
   const profile = String(req.query.profile ?? getLastProfile());
@@ -669,8 +762,17 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, HOST, () => {
+  const srv = app.listen(PORT, HOST, () => {
     console.log(`PrenotaBot Livre running at http://${HOST}:${PORT}`);
+  });
+  srv.on("error", (err: NodeJS.ErrnoException) => {
+    if (err.code === "EADDRINUSE") {
+      console.error(
+        `Porta ${PORT} já está em uso. O PrenotaBot já pode estar rodando em http://localhost:${PORT}.`
+      );
+      process.exit(1);
+    }
+    throw err;
   });
 }
 

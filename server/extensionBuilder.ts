@@ -1000,6 +1000,22 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       });
     return true;
   }
+  if (msg.type === 'START_ALL_INTEGRATED') {
+    fetch('http://localhost:3000/api/automation/start-all', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ forceImmediate: Boolean(msg.forceImmediate) })
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        chrome.storage.local.set({ pb_mode: 'active' });
+        sendResponse({ ok: true, data });
+      })
+      .catch((err) => {
+        sendResponse({ ok: false, error: String(err && err.message ? err.message : err) });
+      });
+    return true;
+  }
 });
 `;
 
@@ -1240,7 +1256,8 @@ bindCopy('copyMail', QUICK_DATA.email, 'Copiar E-mail');
         <div id="ntOtpSrc" style="font-size:12px;color:#94a3b8;margin-top:2px">Via IMAP ou Webmail aberto no Chromium</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button id="ntFetchOtp" class="btn">Verificar E-mail OTP agora</button>
+        <button id="ntStartAll" class="btn">Ligar Tudo Automático</button>
+        <button id="ntFetchOtp" class="btn btn-sec">Verificar E-mail OTP agora</button>
         <button id="ntCopyOtp" class="btn btn-sec">Copiar OTP</button>
         <button id="ntCopyMail" class="btn btn-sec">Copiar E-mail</button>
         <button id="ntCopyEnd" class="btn btn-sec">Copiar Endereço</button>
@@ -1278,6 +1295,15 @@ function checkOtp(activeFeedback) {
 }
 checkOtp(false);
 setInterval(() => checkOtp(false), 15000);
+
+document.getElementById('ntStartAll').addEventListener('click', () => {
+  const btn = document.getElementById('ntStartAll');
+  btn.textContent = 'Sincronizando...';
+  chrome.runtime.sendMessage({ type: 'START_ALL_INTEGRATED', forceImmediate: false }, (res) => {
+    btn.textContent = (res && res.ok) ? 'Tudo Integrado e Ativo!' : 'Inicie o Painel Local';
+    setTimeout(() => { btn.textContent = 'Ligar Tudo Automático'; }, 2500);
+  });
+});
 
 document.getElementById('ntFetchOtp').addEventListener('click', () => checkOtp(true));
 document.getElementById('ntCopyOtp').addEventListener('click', async () => {

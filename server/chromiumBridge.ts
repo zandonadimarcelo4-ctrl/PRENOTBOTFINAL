@@ -181,6 +181,54 @@ export async function openChromiumBridgeTab(
   }
 }
 
+export async function ensureChromiumDedicatedTabs(
+  serviceId: number,
+  chromiumCfg: Partial<ChromiumConfig> = {}
+): Promise<{
+  connected: boolean;
+  opened: string[];
+  alreadyOpen: string[];
+}> {
+  const status = await getChromiumBridgeStatus(chromiumCfg.porta_cdp);
+  if (!status.connected) {
+    return { connected: false, opened: [], alreadyOpen: [] };
+  }
+
+  const sid = Number.isInteger(serviceId) && serviceId > 0 ? serviceId : 5402;
+  const opened: string[] = [];
+  const alreadyOpen: string[] = [];
+
+  const desired: Array<{ check: boolean; url: string }> = [
+    {
+      check: status.hasPrenotamiTab,
+      url: `${SITE}/Services/Booking/${sid}`,
+    },
+  ];
+  if (chromiumCfg.abrir_whatsapp_ao_iniciar !== false) {
+    desired.push({
+      check: status.hasWhatsappTab,
+      url: "https://web.whatsapp.com/",
+    });
+  }
+  if (chromiumCfg.abrir_webmail_ao_iniciar !== false) {
+    desired.push({
+      check: status.hasWebmailTab,
+      url: sanitizeWebmailUrl(chromiumCfg.url_webmail),
+    });
+  }
+
+  for (const item of desired) {
+    if (item.check) {
+      alreadyOpen.push(item.url);
+    } else {
+      const res = await openChromiumBridgeTab(item.url, chromiumCfg.porta_cdp);
+      if (res.ok && res.url) opened.push(res.url);
+    }
+  }
+
+  return { connected: true, opened, alreadyOpen };
+}
+
 function buildStartupUrls(
   serviceId: number,
   chromiumCfg: Partial<ChromiumConfig>,

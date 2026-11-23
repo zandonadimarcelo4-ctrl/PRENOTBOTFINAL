@@ -1,0 +1,46 @@
+{
+  "HomepageLocation": "https://prenotami.esteri.it/",
+  "HomepageIsNewTabPage": false,
+  "ShowHomeButton": true,
+  "BookmarkBarEnabled": true,
+  "DefaultBrowserSettingEnabled": false,
+  "PasswordManagerEnabled": false,
+  "RestoreOnStartup": 4,
+  "RestoreOnStartupURLs": [
+    "https://prenotami.esteri.it/",
+    "https://prenotami.esteri.it/Services/Booking/5402",
+    "https://prenotami.esteri.it/Services/Booking/5402",
+    "https://web.whatsapp.com/",
+    "https://mail.google.com/",
+    "http://localhost:3000"
+  ],
+  "ManagedBookmarks": [
+    {
+      "toplevel_name": "Prenot@mi — Navegador Dedicado"
+    },
+    {
+      "name": "1. Portal Prenot@mi (Login)",
+      "url": "https://prenotami.esteri.it/"
+    },
+    {
+      "name": "2. Agendar Serviço 5402",
+      "url": "https://prenotami.esteri.it/Services/Booking/5402"
+    },
+    {
+      "name": "3. Meus Agendamentos",
+      "url": "https://prenotami.esteri.it/Services"
+    },
+    {
+      "name": "4. WhatsApp Web (Radar)",
+      "url": "https://web.whatsapp.com/"
+    },
+    {
+      "name": "5. Webmail OTP",
+      "url": "https://mail.google.com/"
+    },
+    {
+      "name": "6. Painel PrenotaBot",
+      "url": "http://localhost:3000"
+    }
+  ]
+}

@@ -70,4 +70,20 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       });
     return true;
   }
+  if (msg.type === 'START_ALL_INTEGRATED') {
+    fetch('http://localhost:3000/api/automation/start-all', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ forceImmediate: Boolean(msg.forceImmediate) })
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        chrome.storage.local.set({ pb_mode: 'active' });
+        sendResponse({ ok: true, data });
+      })
+      .catch((err) => {
+        sendResponse({ ok: false, error: String(err && err.message ? err.message : err) });
+      });
+    return true;
+  }
 });

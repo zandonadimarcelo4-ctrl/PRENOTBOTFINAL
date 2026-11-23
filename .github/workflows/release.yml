@@ -1,0 +1,60 @@
+name: Gerar e Publicar Release Portatil
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Rodar testes e validacao TypeScript
+        run: |
+          npm test
+          npm run lint
+
+      - name: Construir pacote portatil pre-instalado
+        run: npm run release:build
+
+      - name: Verificar ausencia de segredos no ZIP
+        run: |
+          node -e '
+            const fs = require("node:fs");
+            const buf = fs.readFileSync("release/PrenotaBot-Livre-Portatil.zip");
+            if (buf.readUInt32LE(0) !== 0x04034b50) throw new Error("ZIP invalido");
+            if (!buf.includes("PrenotaBot-Livre/INICIAR-AQUI.bat")) throw new Error("INICIAR-AQUI.bat ausente");
+            if (!buf.includes("PrenotaBot-Livre/dist-server/server.mjs")) throw new Error("server.mjs ausente");
+            if (!buf.includes("PrenotaBot-Livre/dist/index.html")) throw new Error("dist/index.html ausente");
+            if (buf.includes("PrenotaBot-Livre/.env\0")) throw new Error(".env real nao deve estar no ZIP");
+            console.log("ZIP verificado com sucesso:", buf.length, "bytes");
+          '
+
+      - name: Publicar ZIP no GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'v2.2-portatil' }}
+          name: PrenotaBot Livre 2.0 — Pacote Portátil Pré-Instalado
+          generate_release_notes: true
+          make_latest: true
+          files: |
+            release/PrenotaBot-Livre-Portatil.zip
