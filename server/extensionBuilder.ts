@@ -778,7 +778,44 @@ export function buildUserscript(cfg: BotConfig, env: Partial<EnvMap>): string {
     }
   }
 
+  function applyLiveSyncConfig(live) {
+    if (!live || typeof live !== 'object') return;
+    if (typeof live.servico === 'number' && live.servico > 0) CONFIG.servico = live.servico;
+    if (typeof live.intervaloMin === 'number') CONFIG.intervaloMin = live.intervaloMin;
+    if (typeof live.intervaloMax === 'number') CONFIG.intervaloMax = live.intervaloMax;
+    if (typeof live.fusoHorario === 'string' && live.fusoHorario) CONFIG.fusoHorario = live.fusoHorario;
+    if (typeof live.horarioAlvo === 'string' && live.horarioAlvo) CONFIG.horarioAlvo = live.horarioAlvo;
+    if (typeof live.antecedenciaMinutos === 'number') CONFIG.antecedenciaMinutos = live.antecedenciaMinutos;
+    if (Array.isArray(live.diasSemana) && live.diasSemana.length) CONFIG.diasSemana = live.diasSemana;
+    if (typeof live.abasAgendamento === 'number') CONFIG.abasAgendamento = live.abasAgendamento;
+    if (typeof live.autoOtpEmail === 'boolean') CONFIG.autoOtpEmail = live.autoOtpEmail;
+    if (typeof live.somenteAlertar === 'boolean') CONFIG.somenteAlertar = live.somenteAlertar;
+    if (live.radarWhatsapp && typeof live.radarWhatsapp === 'object') CONFIG.radarWhatsapp = live.radarWhatsapp;
+    if (live.dados && typeof live.dados === 'object') CONFIG.dados = live.dados;
+    if (Array.isArray(live.acompanhantes)) CONFIG.acompanhantes = live.acompanhantes;
+    if (live.respostasAprendidas && typeof live.respostasAprendidas === 'object') CONFIG.respostasAprendidas = live.respostasAprendidas;
+    if (live.otp && live.otp.code) {
+      try { localStorage.setItem('pb_last_otp', JSON.stringify(live.otp)); } catch (_) {}
+    }
+  }
+
+  function syncWithLocalPanel(cb) {
+    try {
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({ type: 'SYNC_LIVE_CONFIG' }, (res) => {
+          if (res && res.ok && res.data) {
+            applyLiveSyncConfig(res.data);
+          }
+          cb();
+        });
+        return;
+      }
+    } catch (_) {}
+    cb();
+  }
+
   window.addEventListener('load', () => {
+    syncWithLocalPanel(() => {
     const host = location.hostname.toLowerCase();
     if (host === 'web.whatsapp.com') {
       mountWhatsappRadar();
@@ -857,6 +894,7 @@ export function buildUserscript(cfg: BotConfig, env: Partial<EnvMap>): string {
           }, 20000);
         }
       }
+    });
     });
   });
 })();
@@ -1016,7 +1054,50 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       });
     return true;
   }
+  if (msg.type === 'SYNC_LIVE_CONFIG') {
+    fetch('http://localhost:3000/api/extension/live-config')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && data.ok) {
+          const patch = { pb_live_sync: data };
+          if (data.runner && data.runner.running) {
+            const waiting = String(data.runner.bigStatus || '').startsWith('Aguardando');
+            patch.pb_mode = waiting ? 'scheduled' : 'active';
+          }
+          if (data.otp && data.otp.code) {
+            patch.pb_last_otp = data.otp;
+          }
+          chrome.storage.local.set(patch);
+        }
+        sendResponse({ ok: true, data });
+      })
+      .catch(() => {
+        chrome.storage.local.get(['pb_live_sync'], (res) => {
+          sendResponse({ ok: false, data: res && res.pb_live_sync ? res.pb_live_sync : null });
+        });
+      });
+    return true;
+  }
 });
+
+// Sincronia automatica em segundo plano a cada 15s entre o Painel e o Chromium
+setInterval(() => {
+  fetch('http://localhost:3000/api/extension/live-config')
+    .then((r) => r.json())
+    .then((data) => {
+      if (!data || !data.ok) return;
+      const patch = { pb_live_sync: data };
+      if (data.runner && data.runner.running) {
+        const waiting = String(data.runner.bigStatus || '').startsWith('Aguardando');
+        patch.pb_mode = waiting ? 'scheduled' : 'active';
+      }
+      if (data.otp && data.otp.code) {
+        patch.pb_last_otp = data.otp;
+      }
+      chrome.storage.local.set(patch);
+    })
+    .catch(() => {});
+}, 15000);
 `;
 
   const popupHtml = `<!doctype html>

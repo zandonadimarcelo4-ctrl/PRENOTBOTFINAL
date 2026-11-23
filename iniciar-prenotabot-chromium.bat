@@ -29,6 +29,31 @@ for %%P in (
 )
 :found
 if "%BIN%"=="" (
+  where winget >nul 2>nul
+  if not errorlevel 1 (
+    echo Navegador Chromium nao encontrado. Tentando instalar Chromium de codigo aberto via winget...
+    winget install -e --id Hibbiki.Chromium --accept-package-agreements --accept-source-agreements
+    for %%P in (
+      "%LocalAppData%\Chromium\Application\chrome.exe"
+      "%ProgramFiles%\Chromium\Application\chrome.exe"
+      "%ProgramFiles%\Ungoogled Chromium\chrome.exe"
+      "%LocalAppData%\Thorium\Application\thorium.exe"
+      "%ProgramFiles%\BraveSoftware\Brave-Browser\Application\brave.exe"
+      "%LocalAppData%\BraveSoftware\Brave-Browser\Application\brave.exe"
+      "%ProgramFiles%\Google\Chrome\Application\chrome.exe"
+      "%LocalAppData%\Google\Chrome\Application\chrome.exe"
+      "%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"
+      "%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"
+    ) do (
+      if exist %%P (
+        set "BIN=%%~P"
+        goto :found2
+      )
+    )
+    :found2
+  )
+)
+if "%BIN%"=="" (
   echo [ERRO] Navegador Chromium nao encontrado.
   echo Baixe o Chromium de codigo aberto: https://www.chromium.org/getting-involved/download-chromium/
   pause

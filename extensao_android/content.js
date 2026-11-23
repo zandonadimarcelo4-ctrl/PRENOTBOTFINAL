@@ -803,7 +803,44 @@
     }
   }
 
+  function applyLiveSyncConfig(live) {
+    if (!live || typeof live !== 'object') return;
+    if (typeof live.servico === 'number' && live.servico > 0) CONFIG.servico = live.servico;
+    if (typeof live.intervaloMin === 'number') CONFIG.intervaloMin = live.intervaloMin;
+    if (typeof live.intervaloMax === 'number') CONFIG.intervaloMax = live.intervaloMax;
+    if (typeof live.fusoHorario === 'string' && live.fusoHorario) CONFIG.fusoHorario = live.fusoHorario;
+    if (typeof live.horarioAlvo === 'string' && live.horarioAlvo) CONFIG.horarioAlvo = live.horarioAlvo;
+    if (typeof live.antecedenciaMinutos === 'number') CONFIG.antecedenciaMinutos = live.antecedenciaMinutos;
+    if (Array.isArray(live.diasSemana) && live.diasSemana.length) CONFIG.diasSemana = live.diasSemana;
+    if (typeof live.abasAgendamento === 'number') CONFIG.abasAgendamento = live.abasAgendamento;
+    if (typeof live.autoOtpEmail === 'boolean') CONFIG.autoOtpEmail = live.autoOtpEmail;
+    if (typeof live.somenteAlertar === 'boolean') CONFIG.somenteAlertar = live.somenteAlertar;
+    if (live.radarWhatsapp && typeof live.radarWhatsapp === 'object') CONFIG.radarWhatsapp = live.radarWhatsapp;
+    if (live.dados && typeof live.dados === 'object') CONFIG.dados = live.dados;
+    if (Array.isArray(live.acompanhantes)) CONFIG.acompanhantes = live.acompanhantes;
+    if (live.respostasAprendidas && typeof live.respostasAprendidas === 'object') CONFIG.respostasAprendidas = live.respostasAprendidas;
+    if (live.otp && live.otp.code) {
+      try { localStorage.setItem('pb_last_otp', JSON.stringify(live.otp)); } catch (_) {}
+    }
+  }
+
+  function syncWithLocalPanel(cb) {
+    try {
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage({ type: 'SYNC_LIVE_CONFIG' }, (res) => {
+          if (res && res.ok && res.data) {
+            applyLiveSyncConfig(res.data);
+          }
+          cb();
+        });
+        return;
+      }
+    } catch (_) {}
+    cb();
+  }
+
   window.addEventListener('load', () => {
+    syncWithLocalPanel(() => {
     const host = location.hostname.toLowerCase();
     if (host === 'web.whatsapp.com') {
       mountWhatsappRadar();
@@ -882,6 +919,7 @@
           }, 20000);
         }
       }
+    });
     });
   });
 })();

@@ -49,7 +49,7 @@ setlocal\r
 cd /d "%~dp0"\r
 title PrenotaBot Livre 2.0 - Iniciador Unico\r
 echo ============================================================\r
-echo   PrenotaBot Livre 2.0 - Modo Pre-Instalado (${navLabel})\r
+echo   PrenotaBot Livre 2.0 - Pacote Pre-Instalado (${navLabel})\r
 echo ============================================================\r
 if not exist "logs" mkdir "logs"\r
 if not exist "files" mkdir "files"\r
@@ -58,19 +58,21 @@ if not exist "comprovantes" mkdir "comprovantes"\r
 if not exist ".env" (\r
   if exist ".env.example" copy /Y ".env.example" ".env" >nul\r
 )\r
-where node >nul 2>nul\r
-if errorlevel 1 (\r
-  echo [AVISO] Node.js nao encontrado no PATH. Tentando instalar Node.js LTS via winget...\r
-  where winget >nul 2>nul\r
-  if not errorlevel 1 (\r
-    winget install -e --id OpenJS.NodeJS.LTS --accept-package-agreements --accept-source-agreements\r
-  )\r
+set "NODE_BIN="\r
+if exist "%~dp0runtime\\node\\node.exe" set "NODE_BIN=%~dp0runtime\\node\\node.exe"\r
+if "%NODE_BIN%"=="" (\r
+  for /f "delims=" %%I in ('where node 2^>nul') do if "%NODE_BIN%"=="" set "NODE_BIN=%%I"\r
 )\r
-where node >nul 2>nul\r
-if errorlevel 1 (\r
+if "%NODE_BIN%"=="" (\r
+  echo [0/2] Node.js nao detectado. Baixando runtime portatil Node 22 LTS ^(sem instalador^)...\r
+  if not exist "runtime" mkdir "runtime"\r
+  powershell -NoProfile -Command "$ProgressPreference='SilentlyContinue'; $zip='runtime\\node.zip'; Invoke-WebRequest -UseBasicParsing -Uri 'https://nodejs.org/dist/v22.14.0/node-v22.14.0-win-x64.zip' -OutFile $zip; Expand-Archive -Path $zip -DestinationPath 'runtime' -Force; if(Test-Path 'runtime\\node'){Remove-Item -Recurse -Force 'runtime\\node'}; Rename-Item -Path 'runtime\\node-v22.14.0-win-x64' -NewName 'node'; Remove-Item -Force $zip"\r
+  if exist "%~dp0runtime\\node\\node.exe" set "NODE_BIN=%~dp0runtime\\node\\node.exe"\r
+)\r
+if "%NODE_BIN%"=="" (\r
   echo.\r
-  echo [ERRO] Node.js 22+ e necessario apenas para rodar o servidor local.\r
-  echo Baixe rapidamente em: https://nodejs.org/ ^(versao LTS^) e depois clique aqui novamente.\r
+  echo [ERRO] Nao foi possivel obter o runtime Node.js automaticamente.\r
+  echo Baixe rapidamente em: https://nodejs.org/ ^(versao LTS^) e tente de novo.\r
   pause\r
   exit /b 1\r
 )\r
@@ -89,7 +91,7 @@ if not exist "dist\\index.html" (\r
 powershell -NoProfile -Command "try { Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:3000/api/bot/status' -TimeoutSec 2 | Out-Null; exit 0 } catch { exit 1 }" >nul 2>nul\r
 if errorlevel 1 (\r
   echo [1/2] Iniciando servidor local pre-compilado em ${panelOrigin} ...\r
-  start "PrenotaBot-Servidor" /min cmd /c "cd /d ""%~dp0"" && set NODE_ENV=production && node dist-server\\server.mjs > logs\\servidor.log 2>&1"\r
+  start "PrenotaBot-Servidor" /min cmd /c "cd /d ""%~dp0"" && set NODE_ENV=production && ""%NODE_BIN%"" dist-server\\server.mjs > logs\\servidor.log 2>&1"\r
   powershell -NoProfile -Command "for($i=0;$i -lt 15;$i++){try{Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:3000/api/bot/status' -TimeoutSec 1|Out-Null;break}catch{Start-Sleep -Milliseconds 700}}"\r
 ) else (\r
   echo [1/2] Servidor PrenotaBot ja esta ativo em ${panelOrigin}.\r
@@ -109,7 +111,7 @@ SCRIPT_DIR="$(cd "$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
 cd "\${SCRIPT_DIR}"
 
 echo "============================================================"
-echo "  PrenotaBot Livre 2.0 - Modo Pre-Instalado (${navLabel})"
+echo "  PrenotaBot Livre 2.0 - Pacote Pre-Instalado (${navLabel})"
 echo "============================================================"
 
 mkdir -p logs files perfis comprovantes
@@ -118,7 +120,21 @@ if [ ! -f ".env" ] && [ -f ".env.example" ]; then
   cp ".env.example" ".env"
 fi
 
-if ! command -v node >/dev/null 2>&1; then
+NODE_BIN=""
+if [ -x "\${SCRIPT_DIR}/runtime/node/bin/node" ]; then
+  NODE_BIN="\${SCRIPT_DIR}/runtime/node/bin/node"
+elif command -v node >/dev/null 2>&1; then
+  NODE_BIN="$(command -v node)"
+elif [ "$(uname -s)" = "Linux" ] && [ "$(uname -m)" = "x86_64" ] && command -v curl >/dev/null 2>&1 && command -v tar >/dev/null 2>&1; then
+  echo "[0/2] Baixando runtime portatil Node 22 LTS (sem precisar instalar globalmente)..."
+  mkdir -p "\${SCRIPT_DIR}/runtime/node"
+  curl -fsSL "https://nodejs.org/dist/v22.14.0/node-v22.14.0-linux-x64.tar.xz" | tar -xJ -C "\${SCRIPT_DIR}/runtime/node" --strip-components=1
+  if [ -x "\${SCRIPT_DIR}/runtime/node/bin/node" ]; then
+    NODE_BIN="\${SCRIPT_DIR}/runtime/node/bin/node"
+  fi
+fi
+
+if [ -z "\${NODE_BIN}" ]; then
   echo "[ERRO] Node.js 22+ nao encontrado."
   echo "Instale o Node.js LTS em https://nodejs.org/ e execute novamente."
   exit 1
@@ -137,7 +153,7 @@ fi
 
 if [ "\${SERVER_UP}" -eq 0 ]; then
   echo "[1/2] Iniciando servidor local pre-compilado em ${panelOrigin} ..."
-  NODE_ENV=production nohup node "\${SCRIPT_DIR}/dist-server/server.mjs" > "\${SCRIPT_DIR}/logs/servidor.log" 2>&1 &
+  NODE_ENV=production nohup "\${NODE_BIN}" "\${SCRIPT_DIR}/dist-server/server.mjs" > "\${SCRIPT_DIR}/logs/servidor.log" 2>&1 &
   for _ in $(seq 1 15); do
     if command -v curl >/dev/null 2>&1 && curl -sf "http://127.0.0.1:3000/api/bot/status" >/dev/null 2>&1; then
       break
@@ -166,11 +182,11 @@ echo "Tudo pronto! Painel: ${panelOrigin}"
     "COMO INICIAR EM 2 CLIQUES:",
     "  1. Extraia TODO o conteudo deste ZIP em uma pasta no seu PC (ex.: C:\\PrenotaBot-Livre).",
     "  2. No Windows: clique duas vezes em INICIAR-AQUI.bat",
-    "     No Linux/macOS: execute no terminal: chmod +x iniciar-aqui.sh && ./iniciar-aqui.sh",
+    "     No Linux/macOS: execute ./iniciar-aqui.sh",
     "",
-    "REQUISITOS NO PC:",
-    "  - Node.js 22+ LTS (apenas o runtime, disponivel em https://nodejs.org/).",
-    "  - Um navegador Chromium aberto/instalado (Chromium, Ungoogled Chromium, Brave, Chrome ou Edge).",
+    "ZERO COMPLICACAO NO PC:",
+    "  - Se voce nao tiver Node.js instalado, o proprio INICIAR-AQUI baixa o runtime portatil na pasta ./runtime automaticamente.",
+    "  - Detecta automaticamente Chromium, Ungoogled Chromium, Brave, Chrome ou Edge instalados no PC.",
     "",
     "O QUE ABRE AUTOMATICAMENTE:",
     `  - Painel web de controle: ${panelOrigin}`,

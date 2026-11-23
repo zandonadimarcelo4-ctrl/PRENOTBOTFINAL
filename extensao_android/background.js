@@ -86,4 +86,47 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       });
     return true;
   }
+  if (msg.type === 'SYNC_LIVE_CONFIG') {
+    fetch('http://localhost:3000/api/extension/live-config')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && data.ok) {
+          const patch = { pb_live_sync: data };
+          if (data.runner && data.runner.running) {
+            const waiting = String(data.runner.bigStatus || '').startsWith('Aguardando');
+            patch.pb_mode = waiting ? 'scheduled' : 'active';
+          }
+          if (data.otp && data.otp.code) {
+            patch.pb_last_otp = data.otp;
+          }
+          chrome.storage.local.set(patch);
+        }
+        sendResponse({ ok: true, data });
+      })
+      .catch(() => {
+        chrome.storage.local.get(['pb_live_sync'], (res) => {
+          sendResponse({ ok: false, data: res && res.pb_live_sync ? res.pb_live_sync : null });
+        });
+      });
+    return true;
+  }
 });
+
+// Sincronia automatica em segundo plano a cada 15s entre o Painel e o Chromium
+setInterval(() => {
+  fetch('http://localhost:3000/api/extension/live-config')
+    .then((r) => r.json())
+    .then((data) => {
+      if (!data || !data.ok) return;
+      const patch = { pb_live_sync: data };
+      if (data.runner && data.runner.running) {
+        const waiting = String(data.runner.bigStatus || '').startsWith('Aguardando');
+        patch.pb_mode = waiting ? 'scheduled' : 'active';
+      }
+      if (data.otp && data.otp.code) {
+        patch.pb_last_otp = data.otp;
+      }
+      chrome.storage.local.set(patch);
+    })
+    .catch(() => {});
+}, 15000);

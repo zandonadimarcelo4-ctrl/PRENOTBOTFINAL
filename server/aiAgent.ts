@@ -22,6 +22,7 @@ import {
 } from "./core.ts";
 import { ensureAndroidExtensionFiles } from "./extensionBuilder.ts";
 import {
+  ensureChromiumDedicatedTabs,
   getChromiumBridgeStatus,
   openChromiumBridgeTab,
   safeCdpPort,
@@ -784,16 +785,22 @@ export async function runConsularAgent(params: {
       }
       if (act === "start_immediate_test") {
         const ok = runner.start(profile, false, true);
+        if (ok) {
+          void ensureChromiumDedicatedTabs(cfg.servicos[0] ?? 5402, cfg.chromium);
+        }
         actions.push({
           step: stepCounter,
           tool: "control_monitor",
-          summary: ok ? "Monitoramento imediato (teste) iniciado pelo agente" : "Monitor já estava em execução",
+          summary: ok ? "Monitoramento imediato (teste) + abas Chromium iniciados pelo agente" : "Monitor já estava em execução",
           ok,
         });
         return JSON.stringify({ ok, action: act });
       }
       if (act === "start_scheduled") {
         const ok = runner.start(profile, false, false);
+        if (ok) {
+          void ensureChromiumDedicatedTabs(cfg.servicos[0] ?? 5402, cfg.chromium);
+        }
         const sched = secondsUntilScheduledStart(cfg);
         actions.push({
           step: stepCounter,

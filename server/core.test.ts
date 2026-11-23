@@ -44,6 +44,7 @@ import {
   buildSanitizedReleaseConfig,
   createPortableReleaseZip,
 } from "./releaseBuilder.ts";
+import { runTestBench } from "./testbench.ts";
 
 test("normalize strips accents, trims and collapses spaces", () => {
   assert.equal(normalize("  Endereço   COMPLETO "), "endereco completo");
@@ -337,6 +338,37 @@ test("releaseBuilder generates 1-click launchers and strips secrets from release
     assert.ok(!zipBuf.includes("Rua Privada 999"));
   }
 });
+
+test("runTestBench validates complete configuration and flags missing login", async () => {
+  const emptyEnv = buildEmptyEnvMap();
+  const incompleteReport = await runTestBench(
+    structuredClone(DEFAULT_CONFIG),
+    emptyEnv,
+    { checkPortal: false, checkImap: false }
+  );
+  assert.equal(incompleteReport.overallStatus, "FALHA");
+  assert.ok(incompleteReport.failCount >= 1);
+  assert.ok(incompleteReport.checks.some((c) => c.id === "schedule" && c.status === "ok"));
+  assert.ok(incompleteReport.checks.some((c) => c.id === "whatsapp_radar" && c.status === "ok"));
+
+  const readyCfg = structuredClone(DEFAULT_CONFIG);
+  readyCfg.dados.endereco = "Rua Teste, 100";
+  readyCfg.dados.altura_cm = "175";
+  readyCfg.dados.estado_civil = "Solteiro/Solteira";
+  readyCfg.dados.cor_olhos = "Marrom";
+  const readyEnv = {
+    ...emptyEnv,
+    PRENOTAMI_EMAIL: "teste@example.com",
+    PRENOTAMI_SENHA: "senha-forte",
+  };
+  const readyReport = await runTestBench(readyCfg, readyEnv, {
+    checkPortal: false,
+    checkImap: false,
+  });
+  assert.equal(readyReport.failCount, 0);
+  assert.ok(readyReport.checks.some((c) => c.id === "credentials_form" && c.status === "ok"));
+});
+
 
 
 

@@ -518,6 +518,22 @@ if not exist "%PROFILE_DIR%\\Default\\Preferences" if exist "%SEED_DIR%\\Prefere
 if not exist "%PROFILE_DIR%\\Default\\Bookmarks" if exist "%SEED_DIR%\\Bookmarks" copy /Y "%SEED_DIR%\\Bookmarks" "%PROFILE_DIR%\\Default\\Bookmarks" >nul\r
 ${binSection}\r
 if "%BIN%"=="" (\r
+  where winget >nul 2>nul\r
+  if not errorlevel 1 (\r
+    echo Navegador Chromium nao encontrado. Tentando instalar Chromium de codigo aberto via winget...\r
+    winget install -e --id Hibbiki.Chromium --accept-package-agreements --accept-source-agreements\r
+    for %%P in (\r
+      ${uniqueWinBins.join("\r\n      ")}\r
+    ) do (\r
+      if exist %%P (\r
+        set "BIN=%%~P"\r
+        goto :found2\r
+      )\r
+    )\r
+    :found2\r
+  )\r
+)\r
+if "%BIN%"=="" (\r
   echo [ERRO] Navegador Chromium nao encontrado.\r
   echo Baixe o Chromium de codigo aberto: https://www.chromium.org/getting-involved/download-chromium/\r
   pause\r

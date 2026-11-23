@@ -202,6 +202,28 @@ export interface OtpRecord {
   isFresh?: boolean;
 }
 
+export interface TestBenchCheck {
+  id: string;
+  category: string;
+  title: string;
+  status: "ok" | "warn" | "fail";
+  detail: string;
+  durationMs: number;
+  actionTab?: "inicio" | "dados" | "horario" | "chromium" | "historico";
+  fixHint?: string;
+}
+
+export interface TestBenchReport {
+  overallStatus: "APROVADO" | "ATENCAO" | "FALHA";
+  passedCount: number;
+  warnCount: number;
+  failCount: number;
+  totalChecks: number;
+  durationMs: number;
+  executedAt: string;
+  checks: TestBenchCheck[];
+}
+
 export interface BootstrapResponse {
   profiles: string[];
   activeProfile: string;

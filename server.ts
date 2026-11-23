@@ -49,6 +49,7 @@ import {
 } from "./server/otpReader.ts";
 import { runConsularAgent } from "./server/aiAgent.ts";
 import { createPortableReleaseZip } from "./server/releaseBuilder.ts";
+import { runTestBench } from "./server/testbench.ts";
 
 ensureDirs();
 
@@ -501,6 +502,37 @@ app.get("/api/extension/files", (req, res) => {
   res.json({ dir: "extensao_android/", files });
 });
 
+app.get("/api/extension/live-config", (_req, res) => {
+  const activeProfile = getLastProfile();
+  const cfg = loadConfig(profilePath(activeProfile));
+  const runnerState = runner.getState();
+  res.json({
+    ok: true,
+    activeProfile,
+    servico: cfg.servicos[0] ?? 5402,
+    intervaloMin: cfg.intervalo_min_segundos,
+    intervaloMax: cfg.intervalo_max_segundos,
+    fusoHorario: cfg.fuso_horario || "America/Sao_Paulo",
+    horarioAlvo: cfg.horario_alvo || "16:00",
+    antecedenciaMinutos: Math.min(10, Math.max(1, cfg.antecedencia_minutos || 2)),
+    diasSemana: cfg.dias_semana?.length ? cfg.dias_semana : [1],
+    abasAgendamento: Math.min(3, Math.max(1, cfg.abas_agendamento || 2)),
+    autoOtpEmail: cfg.chromium?.auto_otp_email !== false,
+    somenteAlertar: Boolean(cfg.somente_alertar),
+    radarWhatsapp: cfg.radar_whatsapp,
+    dados: cfg.dados,
+    acompanhantes: cfg.acompanhantes,
+    respostasAprendidas: cfg.respostas_aprendidas,
+    runner: {
+      running: runnerState.running,
+      bigStatus: runnerState.bigStatus,
+      statusLine: runnerState.statusLine,
+      lastRadarTrigger: runnerState.lastRadarTrigger,
+    },
+    otp: getCachedOtp(),
+  });
+});
+
 app.get("/api/extension/download-zip", (req, res) => {
   const profile = String(req.query.profile ?? getLastProfile());
   const cfg = loadConfig(profilePath(profile));
@@ -741,9 +773,19 @@ app.post("/api/ai/assist", async (req, res) => {
   }
 });
 
+app.post("/api/testbench/run", async (req, res) => {
+  const profile = String(req.body?.profile ?? getLastProfile()).trim();
+  const cfg = (req.body?.cfg as BotConfig) ?? loadConfig(profilePath(profile));
+  const env = (req.body?.env as EnvMap) ?? loadEnv();
+  const checkPortal = req.body?.checkPortal !== false;
+  const checkImap = Boolean(req.body?.checkImap);
+  const report = await runTestBench(cfg, env, { checkPortal, checkImap });
+  res.json(report);
+});
+
 // ---------------- Vite / Static Serving ----------------
 const isProd = process.env.NODE_ENV === "production";
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 const HOST = "0.0.0.0";
 
 async function startServer() {

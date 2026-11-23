@@ -18,6 +18,7 @@ import {
   RunnerState,
   SIM_NAO,
   TIMEZONE_OPTIONS,
+  TestBenchReport,
 } from "./types";
 import { playBeep } from "./utils/audio";
 import { Wizard } from "./components/Wizard";
@@ -30,7 +31,7 @@ const TABS: Array<{ id: TabId; label: string }> = [
   { id: "dados", label: "Meus Dados" },
   { id: "horario", label: "Horário, Radar & OTP" },
   { id: "chromium", label: "Chromium Dedicado" },
-  { id: "historico", label: "Histórico & IA" },
+  { id: "historico", label: "Bancada, Histórico & IA" },
 ];
 
 const MAX_PDF_BYTES = 2 * 1024 * 1024;
@@ -100,6 +101,8 @@ export function App() {
   const [chromiumStatus, setChromiumStatus] =
     useState<ChromiumBridgeStatus | null>(null);
   const [chromiumChecking, setChromiumChecking] = useState(false);
+  const [testBench, setTestBench] = useState<TestBenchReport | null>(null);
+  const [testBenchRunning, setTestBenchRunning] = useState(false);
 
   const [history, setHistory] = useState<HistorySummary>({
     total: 0,
@@ -255,6 +258,59 @@ export function App() {
       setOtpFeedback(e instanceof Error ? e.message : String(e));
     } finally {
       setOtpChecking(false);
+    }
+  }, []);
+
+  const runFullTestBench = useCallback(
+    async (jumpToTab = false) => {
+      if (!cfg || !env) return;
+      if (jumpToTab) setActiveTab("historico");
+      setTestBenchRunning(true);
+      try {
+        const resp = await fetch("/api/testbench/run", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            profile: activeProfile,
+            cfg,
+            env,
+            checkPortal: true,
+            checkImap: Boolean(
+              (env.IMAP_EMAIL || env.PRENOTAMI_EMAIL) && env.IMAP_SENHA_APP
+            ),
+          }),
+        });
+        const data = (await resp.json()) as TestBenchReport;
+        setTestBench(data);
+        setStatusBar(
+          `Bancada concluída às ${data.executedAt}: ${data.passedCount} OK, ${data.warnCount} avisos, ${data.failCount} falhas.`
+        );
+      } catch (e) {
+        setStatusBar(
+          `Erro na bancada: ${e instanceof Error ? e.message : String(e)}`
+        );
+      } finally {
+        setTestBenchRunning(false);
+      }
+    },
+    [activeProfile, cfg, env]
+  );
+
+  const simulateOtpCapture = useCallback(async () => {
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const resp = await fetch("/api/otp/report", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        code,
+        from: "noreply-prenotami@esteri.it",
+        subject: "Prenot@Mi - Simulação Bancada OTP",
+      }),
+    });
+    const data = await resp.json();
+    if (data.otp) {
+      setLatestOtp(data.otp);
+      setStatusBar(`Simulação OTP concluída: código ${data.otp.code} sincronizado.`);
     }
   }, []);
 
@@ -754,6 +810,13 @@ export function App() {
                     >
                       Prontidão {score}%
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => void runFullTestBench(true)}
+                      className="rounded border border-slate-300 bg-white px-2.5 py-0.5 text-[11px] font-bold text-slate-700 hover:bg-slate-100 transition"
+                    >
+                      Bancada de Testes
+                    </button>
                   </div>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600">
                     <span>
@@ -2268,9 +2331,134 @@ export function App() {
             </div>
           )}
 
-          {/* ==================== TAB 5: HISTORICO & IA ==================== */}
+          {/* ==================== TAB 5: BANCADA, HISTORICO & IA ==================== */}
           {activeTab === "historico" && (
             <div className="space-y-5 text-xs">
+              {/* Bancada de Testes Pré-Segunda-Feira */}
+              <section className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-sm font-bold text-slate-900">
+                      Bancada de Testes Pré-Segunda-Feira
+                    </h2>
+                    <p className="text-slate-600 mt-0.5">
+                      Verifica horário, login, PDFs (&lt;= 2 MB), portal Prenot@mi ao vivo, extensão Chromium, OTP e Radar WhatsApp antes da hora H.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={testBenchRunning}
+                      onClick={() => void runFullTestBench(false)}
+                      className="rounded-lg bg-[#009246] px-4 py-2 font-bold text-white shadow-sm hover:bg-[#007a3a] disabled:opacity-50"
+                    >
+                      {testBenchRunning ? "Testando tudo..." : "Rodar Bancada Completa"}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => void simulateWhatsappRadar()}
+                    className="rounded border border-emerald-600 bg-white px-3 py-1.5 font-semibold text-emerald-900 hover:bg-emerald-50"
+                  >
+                    Simular Disparo Radar WA
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void simulateOtpCapture()}
+                    className="rounded border border-teal-600 bg-white px-3 py-1.5 font-semibold text-teal-900 hover:bg-teal-50"
+                  >
+                    Simular Captura OTP
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleTestNotifications()}
+                    className="rounded border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-700 hover:bg-slate-100"
+                  >
+                    Testar Som &amp; Push
+                  </button>
+                </div>
+
+                {testBench && (
+                  <div className="space-y-2.5 pt-1">
+                    <div
+                      className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 font-bold ${
+                        testBench.overallStatus === "APROVADO"
+                          ? "border-emerald-300 bg-emerald-50 text-emerald-900"
+                          : testBench.overallStatus === "ATENCAO"
+                            ? "border-amber-300 bg-amber-50 text-amber-900"
+                            : "border-red-300 bg-red-50 text-red-900"
+                      }`}
+                    >
+                      <span>
+                        Resultado Geral: {testBench.overallStatus} ({testBench.passedCount} OK • {testBench.warnCount} avisos • {testBench.failCount} falhas)
+                      </span>
+                      <span className="font-mono text-[11px] opacity-80">
+                        {testBench.executedAt} ({testBench.durationMs} ms)
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                      {testBench.checks.map((chk) => (
+                        <div
+                          key={chk.id}
+                          className={`rounded-lg border p-3 bg-white flex flex-col justify-between gap-1.5 ${
+                            chk.status === "ok"
+                              ? "border-emerald-200"
+                              : chk.status === "warn"
+                                ? "border-amber-300"
+                                : "border-red-300"
+                          }`}
+                        >
+                          <div>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-bold text-slate-800">
+                                {chk.status === "ok"
+                                  ? "✓"
+                                  : chk.status === "warn"
+                                    ? "!"
+                                    : "✗"}{" "}
+                                {chk.title}
+                              </span>
+                              <span
+                                className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                                  chk.status === "ok"
+                                    ? "bg-emerald-100 text-emerald-800"
+                                    : chk.status === "warn"
+                                      ? "bg-amber-100 text-amber-800"
+                                      : "bg-red-100 text-red-800"
+                                }`}
+                              >
+                                {chk.category}
+                              </span>
+                            </div>
+                            <p className="text-slate-600 mt-1 leading-relaxed">
+                              {chk.detail}
+                            </p>
+                            {chk.fixHint && (
+                              <p className="text-[11px] font-medium text-amber-900 mt-1">
+                                {chk.fixHint}
+                              </p>
+                            )}
+                          </div>
+                          {chk.actionTab && chk.status !== "ok" && (
+                            <button
+                              type="button"
+                              onClick={() => setActiveTab(chk.actionTab!)}
+                              className="self-start text-[11px] font-bold text-blue-700 hover:underline"
+                            >
+                              Corrigir agora →
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </section>
+
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex gap-3">
                   <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2">

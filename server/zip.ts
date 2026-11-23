@@ -57,9 +57,10 @@ export function createZipBuffer(entries: ZipEntryInput[]): Buffer {
     localParts.push(lfh, nameBuf, dataBuf);
 
     // Central directory header (46 bytes + filename)
+    const isScript = cleanName.endsWith(".sh");
     const cdh = Buffer.alloc(46);
     cdh.writeUInt32LE(0x02014b50, 0);
-    cdh.writeUInt16LE(20, 4); // version made by
+    cdh.writeUInt16LE(isScript ? (3 << 8) | 20 : 20, 4); // version made by (Unix for .sh)
     cdh.writeUInt16LE(20, 6); // version needed
     cdh.writeUInt16LE(0x0800, 8); // UTF-8 flag
     cdh.writeUInt16LE(0, 10); // compression: STORE
@@ -73,7 +74,7 @@ export function createZipBuffer(entries: ZipEntryInput[]): Buffer {
     cdh.writeUInt16LE(0, 32);
     cdh.writeUInt16LE(0, 34);
     cdh.writeUInt16LE(0, 36);
-    cdh.writeUInt32LE(0, 38);
+    cdh.writeUInt32LE(isScript ? (0o100755 << 16) >>> 0 : 0, 38);
     cdh.writeUInt32LE(offset, 42);
 
     centralParts.push(cdh, nameBuf);
