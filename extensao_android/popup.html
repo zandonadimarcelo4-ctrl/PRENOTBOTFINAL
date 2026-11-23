@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PrenotaBot Dedicado</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; width: 328px; background: #f8fafc; color: #1f2a37; }
+    .stripe { display: flex; height: 5px; }
+    .stripe div { flex: 1; }
+    header { background: #1f2a37; color: #fff; padding: 12px 14px; }
+    header h1 { margin: 0; font-size: 16px; }
+    header p { margin: 2px 0 0; font-size: 11px; color: #cbd5e1; }
+    main { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+    label { font-size: 12px; font-weight: 600; display: block; margin-bottom: 3px; }
+    input { width: 100%; box-sizing: border-box; padding: 7px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; }
+    button { padding: 9px 12px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 13px; color: #fff; }
+    .green { background: #009246; }
+    .blue { background: #2563eb; }
+    .emerald { background: #047857; }
+    .teal { background: #0f766e; }
+    .dark { background: #334155; }
+    .otp-box { background: #ecfdf5; border: 1px solid #10b981; border-radius: 6px; padding: 8px 10px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
+    .note { font-size: 11px; color: #475569; line-height: 1.4; }
+  </style>
+</head>
+<body>
+  <div class="stripe">
+    <div style="background:#009246"></div>
+    <div style="background:#ffffff"></div>
+    <div style="background:#CE2B37"></div>
+  </div>
+  <header>
+    <h1>PrenotaBot • Chromium Dedicado</h1>
+    <p>Login manual + Autofill + OTP Email + Radar WA</p>
+  </header>
+  <main>
+    <div class="otp-box">
+      <div>
+        <div style="font-size:10px;color:#047857;font-weight:700">OTP &lt;noreply-prenotami@esteri.it&gt;</div>
+        <div id="otpVal" style="font-family:monospace;font-size:15px;font-weight:800;color:#065f46">—</div>
+      </div>
+      <div style="display:flex;gap:4px">
+        <button id="checkOtp" class="teal" style="padding:5px 8px;font-size:11px">Buscar</button>
+        <button id="copyOtp" class="dark" style="padding:5px 8px;font-size:11px">Copiar</button>
+      </div>
+    </div>
+    <div>
+      <label for="sid">ID do Serviço (ex.: 5402)</label>
+      <input id="sid" type="number" value="5402" />
+    </div>
+    <div>
+      <label for="tabs">Abas adicionais de agendamento</label>
+      <input id="tabs" type="number" min="1" max="3" value="2" />
+    </div>
+    <div>
+      <label for="ntfy">Tópico ntfy (opcional)</label>
+      <input id="ntfy" type="text" value="" />
+    </div>
+    <button id="save" class="dark">Salvar ajustes</button>
+    <button id="openLogin" class="green">1. Abrir site (login manual + autofill)</button>
+    <button id="openTabs" class="blue">2. Abrir abas do serviço (teste agora)</button>
+    <button id="openWa" class="emerald">3. Abrir WhatsApp Web (Radar +55 47 92004-1774)</button>
+    <button id="openMail" class="teal">4. Abrir Webmail OTP</button>
+    <div style="display:flex;gap:6px;margin-top:2px">
+      <button id="copyEnd" class="dark" style="flex:1;font-size:11px;padding:6px">Copiar Endereço</button>
+      <button id="copyAlt" class="dark" style="flex:1;font-size:11px;padding:6px">Copiar Altura</button>
+      <button id="copyMail" class="dark" style="flex:1;font-size:11px;padding:6px">Copiar E-mail</button>
+    </div>
+    <p class="note">Chromium configurado exclusivamente para o Prenot@mi: captura OTP de &lt;noreply-prenotami@esteri.it&gt; e dispara com o Radar WhatsApp.</p>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

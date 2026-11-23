@@ -1,0 +1,5 @@
+{
+  "name": "PrenotaBot Livre",
+  "description": "Painel web para configuração, monitoramento de vagas e alertas do Prenot@mi (passaporte italiano).",
+  "requestFramePermissions": []
+}

@@ -1,38 +1,81 @@
-# PrenotaBot Livre - configuracao de exemplo (o painel cria perfis em perfis/)
-# Dica: use o painel (iniciar.bat) - ele edita tudo isto por voce.
+# PrenotaBot Livre - configuracao padrao (perfis em perfis/)
+servicos:
+  - 5402
 
-# IDs dos servicos (numero no fim de .../Services/Booking/XXXX). Pode ser mais de um.
-# Deixe vazio e use "Listar servicos da minha conta" para descobrir os IDs da sua conta.
-servicos: []
-
-intervalo_min_segundos: 45      # minimo 20
+intervalo_min_segundos: 45
 intervalo_max_segundos: 90
-max_tentativas: 0               # 0 = sem limite
-janela_horario: ""              # ex.: "09:30-12:00" (vazio = o dia todo)
-dias_semana: []                 # 1=seg ... 7=dom (vazio = todos)
+max_tentativas: 0
+janela_horario: ""
+fuso_horario: "America/Sao_Paulo"
+horario_alvo: "16:00"
+antecedencia_minutos: 2
+manter_primeira_aba: true
+abas_agendamento: 2
+timeout_pagina_segundos: 60
+dias_semana:
+  - 1
 espera_bloqueio_minutos: 10
 
-segundo_plano: true             # Chrome minimizado; aparece sozinho quando precisar de voce
+segundo_plano: false
 usar_perfil_persistente: true
-auto_login: true
+auto_login: false
+autofill_login: true
 
-somente_alertar: false          # true = so avisa, nao preenche nada
+somente_alertar: false
 preencher_formulario: true
-enviar_otp_automatico: true
-clicar_avancar: true
-auto_agendar: true              # escolhe data/horario no calendario
-data_minima: ""                 # dd/mm/aaaa
+enviar_otp_automatico: false
+clicar_avancar: false
+auto_agendar: false
+data_minima: ""
 data_maxima: ""
 meses_a_procurar: 4
-preferencia_periodo: qualquer   # qualquer | manha | tarde
-dias_preferidos: []             # 1=seg ... 7=dom
+preferencia_periodo: qualquer
+dias_preferidos: []
 salvar_comprovante: true
 alerta_sonoro: true
 
+radar_whatsapp:
+  ativo: true
+  numero_radar: "+55 47 92004-1774"
+  nomes_radar:
+    - "Prenot@mi Radar"
+    - "Prenotami Radar"
+    - "prenotamiradar.com.br"
+    - "+55 47 92004-1774"
+    - "47 92004-1774"
+    - "92004-1774"
+  palavras_chave:
+    - "vaga"
+    - "vagas"
+    - "disponivel"
+    - "abriu"
+    - "agendamento"
+    - "agende"
+    - "corre"
+    - "passaporte"
+    - "prenotami.esteri.it"
+  abrir_automatico: true
+  notificar_push: true
+
+chromium:
+  navegador: "chromium"
+  caminho_executavel: ""
+  porta_cdp: 9222
+  diretorio_perfil: "chromium_perfil"
+  abrir_whatsapp_ao_iniciar: true
+  abrir_painel_ao_iniciar: true
+  abrir_webmail_ao_iniciar: true
+  url_webmail: "https://mail.google.com/"
+  abrir_abas_extras: 2
+  idioma: "pt-BR"
+  modo_dedicado: true
+  bloquear_sites_externos: false
+  auto_otp_email: true
+
 dados:
-  endereco: ""                  # ex.: "Rua X, 100 - Centro - Rondonopolis/MT - CEP 78700-000"
+  endereco: ""
   altura_cm: ""
-  estado_civil: ""              # ex.: Solteiro/Solteira, Casado/a
+  estado_civil: ""
   cor_olhos: ""
   filhos_menores: "Nao"
   quantidade_filhos: "0"
@@ -41,11 +84,6 @@ dados:
   observacoes: ""
 
 acompanhantes: []
-#  - {nome: "Maria", sobrenome: "Silva", nascimento: "10/05/2015", parentesco: "Filho/a"}
-
-# arquivos da pasta files/, na ordem dos anexos do site.
-# Sao Paulo primeiro passaporte (5402): 1 anexo = comprovante de residencia em seu nome.
-documentos: []                  # ex.: [residencia.pdf]
-
+documentos: []
 campos_extra: []
-#  - {id: "ddls_4", tipo: select, valor: "Casado/a"}
+respostas_aprendidas: {}

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Chromium Dedicado — Prenot@mi Command Center</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; }
+    .stripe { display: flex; height: 6px; width: 100%; }
+    .stripe div { flex: 1; }
+    .wrap { max-width: 980px; width: 100%; margin: 0 auto; padding: 32px 20px; display: flex; flex-direction: column; gap: 20px; }
+    .hero { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px 24px; }
+    h1 { margin: 0; font-size: 22px; }
+    .sub { color: #cbd5e1; font-size: 13px; margin-top: 4px; }
+    .clocks { display: flex; gap: 18px; font-family: monospace; font-size: 14px; background: #0f172a; padding: 10px 14px; border-radius: 8px; border: 1px solid #334155; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+    a.card, button.card { text-decoration: none; text-align: left; background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 16px; color: #fff; cursor: pointer; transition: border-color .15s, transform .1s; display: block; }
+    a.card:hover, button.card:hover { border-color: #10b981; transform: translateY(-1px); }
+    .card .title { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+    .card .desc { font-size: 12px; color: #94a3b8; }
+    .panel { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 18px 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px; }
+    .btn { border: none; border-radius: 8px; padding: 10px 14px; font-weight: 700; cursor: pointer; font-size: 13px; color: #fff; background: #009246; }
+    .btn-sec { background: #334155; }
+  </style>
+</head>
+<body>
+  <div class="stripe">
+    <div style="background:#009246"></div>
+    <div style="background:#ffffff"></div>
+    <div style="background:#CE2B37"></div>
+  </div>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <h1>Navegador Chromium — Edição Dedicada Prenot@mi</h1>
+        <div class="sub">Serviço 5402 • Pré-início Segunda-feira (16:00 Brasília = 15:00 Cuiabá / Amazonas) • Confirmação e data manuais</div>
+      </div>
+      <div class="clocks">
+        <div>Brasília: <strong id="clkBrt">--:--:--</strong></div>
+        <div>Cuiabá/AM: <strong id="clkAmt">--:--:--</strong></div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <a class="card" href="https://prenotami.esteri.it/">
+        <div class="title" style="color:#34d399">1. Login Manual Prenot@mi</div>
+        <div class="desc">Abre o portal oficial com autofill de credenciais mantendo a 1ª aba intacta.</div>
+      </a>
+      <a class="card" href="https://prenotami.esteri.it/Services/Booking/5402">
+        <div class="title" style="color:#60a5fa">2. Agendamento Serviço 5402</div>
+        <div class="desc">Aba dedicada ao serviço escolhido para preenchimento automático de formulário.</div>
+      </a>
+      <a class="card" href="https://web.whatsapp.com/">
+        <div class="title" style="color:#2dd4bf">3. WhatsApp Web Radar</div>
+        <div class="desc">Monitora +55 47 92004-1774 em tempo real.</div>
+      </a>
+      <a class="card" href="https://mail.google.com/">
+        <div class="title" style="color:#fbbf24">4. Webmail OTP</div>
+        <div class="desc">Captura automaticamente códigos de &lt;noreply-prenotami@esteri.it&gt;.</div>
+      </a>
+      <a class="card" href="http://localhost:3000/">
+        <div class="title" style="color:#c084fc">5. Painel PrenotaBot & IA</div>
+        <div class="desc">Orquestrador, histórico, PDFs (&lt;= 2 MB) e Agente Principal IA.</div>
+      </a>
+    </div>
+
+    <div class="panel">
+      <div>
+        <div style="font-size:12px;color:#34d399;font-weight:700">LEITOR AUTOMÁTICO DE OTP (&lt;noreply-prenotami@esteri.it&gt;)</div>
+        <div id="ntOtp" style="font-family:monospace;font-size:26px;font-weight:800;margin-top:4px">Aguardando...</div>
+        <div id="ntOtpSrc" style="font-size:12px;color:#94a3b8;margin-top:2px">Via IMAP ou Webmail aberto no Chromium</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button id="ntFetchOtp" class="btn">Verificar E-mail OTP agora</button>
+        <button id="ntCopyOtp" class="btn btn-sec">Copiar OTP</button>
+        <button id="ntCopyMail" class="btn btn-sec">Copiar E-mail</button>
+        <button id="ntCopyEnd" class="btn btn-sec">Copiar Endereço</button>
+      </div>
+    </div>
+  </div>
+  <script src="newtab.js"></script>
+</body>
+</html>

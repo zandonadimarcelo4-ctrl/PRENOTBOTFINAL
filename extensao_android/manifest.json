@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "PrenotaBot Livre — Chromium Dedicado Prenot@mi",
+  "version": "2.2.0",
+  "description": "Navegador dedicado ao Prenot@mi com autofill, captura automática de OTP (<noreply-prenotami@esteri.it>) e Radar WhatsApp Web (+55 47 92004-1774).",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://prenotami.esteri.it/*",
+    "https://iam.esteri.it/*",
+    "https://web.whatsapp.com/*",
+    "https://mail.google.com/*",
+    "https://outlook.live.com/*",
+    "https://outlook.office.com/*",
+    "https://mail.yahoo.com/*",
+    "https://ntfy.sh/*",
+    "http://localhost:3000/*",
+    "http://127.0.0.1:3000/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "PrenotaBot Dedicado"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://prenotami.esteri.it/*",
+        "https://iam.esteri.it/*",
+        "https://web.whatsapp.com/*",
+        "https://mail.google.com/*",
+        "https://outlook.live.com/*",
+        "https://outlook.office.com/*",
+        "https://mail.yahoo.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  }
+}

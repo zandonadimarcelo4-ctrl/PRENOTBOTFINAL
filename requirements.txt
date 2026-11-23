@@ -1,4 +1,0 @@
-selenium>=4.20
-python-dotenv>=1.0
-PyYAML>=6.0.1
-keyring>=24
