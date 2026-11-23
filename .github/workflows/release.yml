@@ -27,13 +27,13 @@ jobs:
       - name: Instalar dependencias
         run: npm install --no-audit --no-fund
 
+      - name: Construir pacote portatil pre-instalado
+        run: npm run release:build
+
       - name: Rodar testes e validacao TypeScript
         run: |
           npm test
           npm run lint
-
-      - name: Construir pacote portatil pre-instalado
-        run: npm run release:build
 
       - name: Verificar ausencia de segredos no ZIP
         run: |
